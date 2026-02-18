@@ -226,7 +226,7 @@ if not api_key:
 client = OpenAI(api_key=api_key) if api_key else None
 
 # 固定パス（必要ならここを書き換えてください）
-folder_path = r"C:\Users\saeko.kawashima\Desktop\Python\rag_practice_data"
+folder_path = str(Path("data/pdfs").resolve())
 
 has_client = client is not None
 has_folder = Path(folder_path).exists()
