@@ -225,12 +225,8 @@ if not api_key:
 
 client = OpenAI(api_key=api_key) if api_key else None
 
-with st.sidebar:
-    st.header("PDF取り込み（フォルダ）")
-    folder_path = st.text_input(
-        "PDFフォルダパス",
-        value=r"C:\Users\saeko.kawashima\Desktop\Python\rag_practice_data"
-    )
+# 固定パス（必要ならここを書き換えてください）
+folder_path = r"C:\Users\saeko.kawashima\Desktop\Python\rag_practice_data"
 
 
 if not client:
