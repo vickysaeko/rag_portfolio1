@@ -8,12 +8,15 @@ import faiss
 import numpy as np
 from openai import OpenAI
 from pypdf import PdfReader
+from dotenv import load_dotenv
 
 # ========= 設定 =========
 EMBED_MODEL = "text-embedding-3-small"
 CHUNK_SIZE = 2000        # ← 少し大きめ（高速化）
 CHUNK_OVERLAP = 200
 EMBED_BATCH_SIZE = 128   # ← 超重要（速さ安定）
+MAX_TEXT_CHARS = 50000   # ← 1ページの最大文字数（暴発防止）
+MAX_CHUNKS = 5000        # ← 全体の最大チャンク数（暴発防止）
 
 PDF_FOLDER = Path("data/pdfs")
 INDEX_DIR = Path("data/index")
@@ -42,6 +45,9 @@ def load_pdfs(folder_path: Path):
             text = clean_text(text)
 
             if text:
+                if len(text) > MAX_TEXT_CHARS:
+                    text = text[:MAX_TEXT_CHARS]
+                    print(f"truncate: {pdf_path.name} p.{i} -> {MAX_TEXT_CHARS} chars")
                 pages.append({
                     "source": pdf_path.name,
                     "page": i,
@@ -62,6 +68,9 @@ def chunk_text(pages):
             chunk = text[start:end]
 
             if chunk.strip():
+                if len(chunks) >= MAX_CHUNKS:
+                    print(f"chunk limit reached: {MAX_CHUNKS}")
+                    return chunks
                 chunks.append({
                     "chunk": chunk,
                     "page": p["page"],
@@ -130,6 +139,7 @@ def snapshot_equal(a, b):
 
 # ========= メイン =========
 def main():
+    load_dotenv()
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise SystemExit("OPENAI_API_KEY を設定してください")

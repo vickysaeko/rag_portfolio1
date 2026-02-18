@@ -7,11 +7,14 @@ import faiss
 import numpy as np
 import streamlit as st
 from openai import OpenAI
+from dotenv import load_dotenv
+
+# .env を読み込む（ローカル実行向け）
+load_dotenv()
 
 # ========= 設定 =========
 EMBED_MODEL = "text-embedding-3-small"
 CHAT_MODEL  = "gpt-4o-mini"
-
 TOP_K = 3
 SCORE_THRESHOLD = 0.78
 ESCALATION_TEXT = "管理部門へお問い合わせください。"

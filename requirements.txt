@@ -3,3 +3,4 @@ pypdf
 faiss-cpu
 openai
 numpy
+python-dotenv
