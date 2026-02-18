@@ -88,6 +88,42 @@ def build_faiss_index(vectors: np.ndarray) -> faiss.Index:
     index.add(vectors)
     return index
 
+def ensure_index(client, folder_path):
+    if st.session_state.index is not None:
+        return  # すでにロード済み
+
+    if not Path(folder_path).exists():
+        st.error("フォルダが存在しません")
+        st.stop()
+
+    # 既存インデックス確認
+    loaded_index, loaded_chunks, _ = load_index_and_metadata()
+    new_snapshot = compute_folder_snapshot(folder_path)
+
+    if loaded_index is not None and not snapshot_changed(new_snapshot):
+        st.session_state.index = loaded_index
+        st.session_state.chunks = loaded_chunks
+        st.info("インデックスをロードしました")
+    else:
+        with st.spinner("インデックス作成中...（初回のみ時間かかります）"):
+            pages = load_pdfs_from_folder(folder_path)
+
+            if not pages:
+                st.error("PDFが見つかりません")
+                st.stop()
+
+            chunks = chunk_text(pages)
+            vecs = embed_texts(client, [c["chunk"] for c in chunks])
+            index = build_faiss_index(vecs)
+
+            save_index_and_metadata(index, chunks, new_snapshot)
+
+            st.session_state.index = index
+            st.session_state.chunks = chunks
+
+        st.success("インデックス作成完了（次回から高速）")
+
+
 def format_context(retrieved: list[dict]) -> str:
     """
     retrieved: [{"page":..., "chunk":..., "score":...}, ...]
@@ -189,14 +225,6 @@ if not api_key:
 
 client = OpenAI(api_key=api_key) if api_key else None
 
-with st.sidebar:
-    st.header("1) PDF取り込み（フォルダ）")
-    folder_path = st.text_input(
-        "PDFフォルダパス",
-        value=r"C:\Users\saeko.kawashima\Desktop\Python\rag_practice_data"
-    )
-    build_btn = st.button("2) インデックス作成（ベクトル化）", type="primary")
-
 
 if build_btn:
     if not client:
@@ -245,16 +273,15 @@ if build_btn:
 
 
 st.divider()
-st.header("3) 質問")
+st.header("質問")
 
 question = st.text_input("質問を入力（例：交通費精算の締め日は？）", value="")
 ask_btn = st.button("回答する")
 
 if ask_btn:
+    ensure_index(client, folder_path)
     if not client:
         st.error("OPENAI_API_KEY が必要です。")
-    elif st.session_state.index is None:
-        st.error("先にPDFを取り込み、インデックス作成してください。")
     elif not question.strip():
         st.warning("質問を入力してください。")
     else:
