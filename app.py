@@ -228,18 +228,19 @@ client = OpenAI(api_key=api_key) if api_key else None
 # 固定パス（必要ならここを書き換えてください）
 folder_path = r"C:\Users\saeko.kawashima\Desktop\Python\rag_practice_data"
 
+has_client = client is not None
+has_folder = Path(folder_path).exists()
 
-if not client:
-    st.error("OPENAI_API_KEY が必要です。")
-    st.stop()
+if not has_client:
+    st.warning("OPENAI_API_KEY が必要です。")
 
-if not Path(folder_path).exists():
-    st.error("指定したフォルダが存在しません。パスを確認してください。")
-    st.stop()
+if not has_folder:
+    st.warning("指定したフォルダが存在しません。パスを確認してください。")
 
-# 起動時に自動でインデックスを準備
-with st.spinner("インデックス準備中..."):
-    ensure_index(client, folder_path)
+# 起動時に自動でインデックスを準備（可能な場合のみ）
+if has_client and has_folder:
+    with st.spinner("インデックス準備中..."):
+        ensure_index(client, folder_path)
 
 
 st.divider()
@@ -249,12 +250,14 @@ question = st.text_input("質問を入力（例：交通費精算の締め日は
 ask_btn = st.button("回答する")
 
 if ask_btn:
-    ensure_index(client, folder_path)
-    if not client:
+    if not has_client:
         st.error("OPENAI_API_KEY が必要です。")
+    elif not has_folder:
+        st.error("指定したフォルダが存在しません。パスを確認してください。")
     elif not question.strip():
         st.warning("質問を入力してください。")
     else:
+        ensure_index(client, folder_path)
         # 検索
         q_vec = embed_texts(client, [question])
         scores, ids = st.session_state.index.search(q_vec, TOP_K)  # scores: (1, k)
