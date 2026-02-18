@@ -12,11 +12,11 @@ from dotenv import load_dotenv
 
 # ========= 設定 =========
 EMBED_MODEL = "text-embedding-3-small"
-CHUNK_SIZE = 2000        # ← 少し大きめ（高速化）
-CHUNK_OVERLAP = 200
-EMBED_BATCH_SIZE = 128   # ← 超重要（速さ安定）
-MAX_TEXT_CHARS = 50000   # ← 1ページの最大文字数（暴発防止）
-MAX_CHUNKS = 5000        # ← 全体の最大チャンク数（暴発防止）
+CHUNK_SIZE = 1200        # ← 精度優先で少し細かく
+CHUNK_OVERLAP = 150
+EMBED_BATCH_SIZE = 64    # ← 安定性重視
+MAX_TEXT_CHARS = 20000   # ← 1ページの最大文字数（暴発防止）
+MAX_CHUNKS = 2000        # ← 全体の最大チャンク数（暴発防止）
 
 PDF_FOLDER = Path("data/pdfs")
 INDEX_DIR = Path("data/index")

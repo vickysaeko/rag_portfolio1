@@ -15,8 +15,8 @@ load_dotenv()
 # ========= 設定 =========
 EMBED_MODEL = "text-embedding-3-small"
 CHAT_MODEL  = "gpt-4o-mini"
-TOP_K = 3
-SCORE_THRESHOLD = 0.78
+TOP_K = 8
+SCORE_THRESHOLD = 0.60
 ESCALATION_TEXT = "管理部門へお問い合わせください。"
 
 # 保存先（build_index.py が作るやつ）
