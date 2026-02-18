@@ -225,51 +225,25 @@ if not api_key:
 
 client = OpenAI(api_key=api_key) if api_key else None
 
+with st.sidebar:
+    st.header("PDF取り込み（フォルダ）")
+    folder_path = st.text_input(
+        "PDFフォルダパス",
+        value=r"C:\Users\saeko.kawashima\Desktop\Python\rag_practice_data"
+    )
 
-if build_btn:
-    if not client:
-        st.error("OPENAI_API_KEY が必要です。")
-        st.stop()
 
-    if not Path(folder_path).exists():
-        st.error("指定したフォルダが存在しません。パスを確認してください。")
-        st.stop()
+if not client:
+    st.error("OPENAI_API_KEY が必要です。")
+    st.stop()
 
-    # 1) まずディスクからロードを試す
-    loaded_index, loaded_chunks, loaded_snapshot = load_index_and_metadata()
+if not Path(folder_path).exists():
+    st.error("指定したフォルダが存在しません。パスを確認してください。")
+    st.stop()
 
-    # 2) 今のフォルダ状態（スナップショット）を作る
-    new_snapshot = compute_folder_snapshot(folder_path)
-
-    # 3) 変更がない & 保存物があるなら、そのまま使う
-    if loaded_index is not None and not snapshot_changed(new_snapshot):
-        st.session_state.index = loaded_index
-        st.session_state.chunks = loaded_chunks
-        st.success("保存済みインデックスを読み込みました（Embedding再計算なし）。")
-    else:
-        # 4) 変更がある or 保存物がない → 作り直し
-        with st.spinner("PDFフォルダ読み込み中..."):
-            pages = load_pdfs_from_folder(folder_path)
-
-        if not pages:
-            st.error("PDFが見つからない、またはPDFからテキスト抽出できませんでした（スキャンPDFの可能性）。")
-            st.stop()
-
-        with st.spinner("チャンク分割中..."):
-            chunks = chunk_text(pages)
-
-        with st.spinner("Embedding作成中...（初回/更新時だけ実行）"):
-            vecs = embed_texts(client, [c["chunk"] for c in chunks])
-
-        with st.spinner("FAISSインデックス構築中..."):
-            index = build_faiss_index(vecs)
-
-        # ディスク保存
-        save_index_and_metadata(index, chunks, new_snapshot)
-
-        st.session_state.index = index
-        st.session_state.chunks = chunks
-        st.success(f"インデックスを作成して保存しました：{len(chunks)}チャンク")
+# 起動時に自動でインデックスを準備
+with st.spinner("インデックス準備中..."):
+    ensure_index(client, folder_path)
 
 
 st.divider()
