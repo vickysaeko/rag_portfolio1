@@ -12,8 +12,8 @@ EMBED_MODEL = "text-embedding-3-small"   # 多言語性能/コスト良いEmbedd
 CHAT_MODEL  = "gpt-4o-mini"             # 軽量で実用的 :contentReference[oaicite:3]{index=3}
 
 TOP_K = 3
-CHUNK_SIZE = 800       # 文字数ベース（まずはこれでOK）
-CHUNK_OVERLAP = 150
+CHUNK_SIZE = 1500       # 文字数ベース（大きいほどチャンク数が減って高速）
+CHUNK_OVERLAP = 100
 SCORE_THRESHOLD = 0.78 # ざっくり初期値。後で調整推奨
 
 ESCALATION_TEXT = "管理部門へお問い合わせください。"
