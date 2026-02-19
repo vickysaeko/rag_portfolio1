@@ -60,7 +60,7 @@ def answer_with_context(client: OpenAI, question: str, context: str) -> str:
             {"role": "user", "content": user},
         ],
         temperature=0.0,
-        max_tokens=700,
+        max_tokens=1200,
     )
     return resp.choices[0].message.content.strip()
 
