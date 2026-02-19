@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # ========= 設定 =========
-EMBED_MODEL = "text-embedding-3-small"
+EMBED_MODEL = "text-embedding-3-large"
 CHAT_MODEL  = "gpt-4o-mini"
 TOP_K = 12
 SCORE_THRESHOLD = 0.00

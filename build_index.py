@@ -11,7 +11,7 @@ from pypdf import PdfReader
 from dotenv import load_dotenv
 
 # ========= 設定 =========
-EMBED_MODEL = "text-embedding-3-small"
+EMBED_MODEL = "text-embedding-3-large"
 CHUNK_SIZE = 1200        # ← 精度優先で少し細かく
 CHUNK_OVERLAP = 150
 EMBED_BATCH_SIZE = 64    # ← 安定性重視
