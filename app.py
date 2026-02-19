@@ -85,6 +85,8 @@ st.set_page_config(page_title="社内マニュアルQA", layout="wide")
 st.title("社内マニュアルQA（PDF RAG）")
 
 api_key = os.getenv("OPENAI_API_KEY", "")
+if not api_key and "OPENAI_API_KEY" in st.secrets:
+    api_key = st.secrets["OPENAI_API_KEY"]
 if not api_key:
     st.error("OPENAI_API_KEY が未設定です。env / 環境変数を設定してから起動してください。")
     st.stop()
