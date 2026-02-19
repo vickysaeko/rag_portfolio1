@@ -15,8 +15,8 @@ load_dotenv()
 # ========= 設定 =========
 EMBED_MODEL = "text-embedding-3-large"
 CHAT_MODEL  = "gpt-4o-mini"
-TOP_K = 12
-SCORE_THRESHOLD = 0.00
+TOP_K = 5
+SCORE_THRESHOLD = 0.30
 ESCALATION_TEXT = "管理部門へお問い合わせください。"
 
 # 保存先（build_index.py が作るやつ）
@@ -113,19 +113,21 @@ if ask_btn:
     scores = scores[0].tolist()
     ids = ids[0].tolist()
 
-    retrieved = []
+    retrieved = []                          # ← if ask_btn の中にある
     for s, idx in zip(scores, ids):
         if idx == -1:
-            continue
+            break
+        if float(s) < SCORE_THRESHOLD:
+            break
         item = chunks[idx]
         retrieved.append({
             "score": float(s),
-            "page": item["page"],
+            "page": item["page"],           # ← ... ではなく元のコードをそのまま
             "source": item.get("source", ""),
             "chunk": item["chunk"],
         })
 
-    if (not retrieved) or (max(r["score"] for r in retrieved) < SCORE_THRESHOLD):
+    if not retrieved:
         st.subheader("回答")
         st.write(ESCALATION_TEXT)
         st.caption("（該当箇所が見つからない/確度が低いためエスカレーション）")

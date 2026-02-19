@@ -26,6 +26,7 @@ FAISS_PATH = INDEX_DIR / "faiss.index"
 CHUNKS_PATH = INDEX_DIR / "chunks.json"
 SNAPSHOT_PATH = INDEX_DIR / "snapshot.json"
 
+
 # ========= ユーティリティ =========
 def clean_text(t: str) -> str:
     t = t.replace("\u00a0", " ")
@@ -79,35 +80,55 @@ def chunk_text(pages):
                     "source": p["source"]
                 })
 
+            if end >= len(text):
+                break          # ← テキストの末尾まで処理したら抜ける
             start = end - CHUNK_OVERLAP
-            if start < 0:
-                start = 0
 
     return chunks
+
 
 def l2_normalize(v):
     norm = np.linalg.norm(v, axis=1, keepdims=True) + 1e-12
     return v / norm
 
-def embed_texts_batched(client, texts):
+import time
+from typing import List
+
+def embed_texts_batched(client, texts: List[str], max_retries: int = 6, sleep_base: float = 1.5):
+    """
+    - バッチでEmbedding
+    - 失敗時は指数バックオフでリトライ
+    - dataのindexで順序を元に戻す（安全策）
+    """
     all_vecs = []
     total = len(texts)
 
     for i in range(0, total, EMBED_BATCH_SIZE):
-        batch = texts[i:i+EMBED_BATCH_SIZE]
+        batch = texts[i:i + EMBED_BATCH_SIZE]
 
-        resp = client.embeddings.create(
-            model=EMBED_MODEL,
-            input=batch
-        )
+        for attempt in range(max_retries):
+            try:
+                resp = client.embeddings.create(model=EMBED_MODEL, input=batch)
 
-        vecs = np.array([d.embedding for d in resp.data], dtype=np.float32)
-        all_vecs.append(vecs)
+                # 順序保証（念のためindexで並び替え）
+                data_sorted = sorted(resp.data, key=lambda x: x.index)
+                vecs = np.array([d.embedding for d in data_sorted], dtype=np.float32)
 
-        print(f"embedding: {min(i+EMBED_BATCH_SIZE, total)}/{total}")
+                all_vecs.append(vecs)
+                done = min(i + EMBED_BATCH_SIZE, total)
+                print(f"embedding: {done}/{total}")
+                break
 
-    vecs = np.vstack(all_vecs)
+            except Exception as e:
+                wait = sleep_base ** attempt
+                print(f"[warn] embedding failed (batch {i}-{i+len(batch)}), retry {attempt+1}/{max_retries}, wait {wait:.1f}s\n{e}")
+                time.sleep(wait)
+        else:
+            raise RuntimeError(f"Embedding failed permanently at batch starting {i}")
+
+    vecs = np.vstack(all_vecs) if all_vecs else np.zeros((0, 1), dtype=np.float32)
     return l2_normalize(vecs)
+
 
 def build_faiss_index(vectors):
     dim = vectors.shape[1]
