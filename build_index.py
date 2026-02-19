@@ -30,6 +30,8 @@ SNAPSHOT_PATH = INDEX_DIR / "snapshot.json"
 def clean_text(t: str) -> str:
     t = t.replace("\u00a0", " ")
     t = re.sub(r"\s+", " ", t).strip()
+    # 日本語の文字間スペースを詰める
+    t = re.sub(r"(?<=[\u3040-\u30ff\u4e00-\u9fff])\s+(?=[\u3040-\u30ff\u4e00-\u9fff])", "", t)
     return t
 
 def load_pdfs(folder_path: Path):

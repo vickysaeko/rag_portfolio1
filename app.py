@@ -45,6 +45,13 @@ def format_context(retrieved: list[dict]) -> str:
     return "\n\n".join(parts)
 
 
+def normalize_query(q: str) -> str:
+    q = re.sub(r"\s+", " ", q).strip()
+    # 日本語の文字間スペースを詰める
+    q = re.sub(r"(?<=[\u3040-\u30ff\u4e00-\u9fff])\s+(?=[\u3040-\u30ff\u4e00-\u9fff])", "", q)
+    return q
+
+
 def answer_with_context(client: OpenAI, question: str, context: str) -> str:
     system = (
         "あなたは社内マニュアルQAのアシスタントです。"
@@ -100,7 +107,7 @@ if ask_btn:
         st.warning("質問を入力してください。")
         st.stop()
 
-    q_vec = embed_query(client, question)
+    q_vec = embed_query(client, normalize_query(question))
     scores, ids = index.search(q_vec, TOP_K)
 
     scores = scores[0].tolist()
